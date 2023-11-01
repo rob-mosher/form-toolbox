@@ -1,28 +1,42 @@
-import { useRef, useState } from 'react'
+import { useContext, useRef } from 'react'
 import {
   Button, Header, Input, Segment
 } from 'semantic-ui-react'
 import { toast } from 'react-toastify'
 import axios from 'axios'
+
+import { UploadStateContext } from '../common/UploadStateProvider'
 import ACCEPTED_UPLOAD_MIME_TYPES from '../common/acceptedUploadMimeTypes'
 
 export default function UploadForm() {
-  const fileRef = useRef(null)
-  const toastRef = useRef(null)
-  const [isUploading, setIsUploading] = useState(false)
+  const {
+    isUploading,
+    uploadFile,
+    // uploadToast,
+    setIsUploading,
+    setUploadFile,
+    // setUploadToast,
+  } = useContext(UploadStateContext)
+  const uploadToastRef = useRef(null)
   // const [imageFile, setImageFile] = useState(null)
+
+  function handleFileChange(e) {
+    if (e.target.files && e.target.files[0]) {
+      setUploadFile(e.target.files[0])
+    }
+  }
 
   function handleUpload(e) {
     e.preventDefault()
 
     setIsUploading(true)
-    toastRef.current = toast('Upload in progress...', {
+    uploadToastRef.current = toast('Upload in progress...', {
       // autoClose: false,
       progress: 0,
       type: toast.TYPE.INFO,
     })
 
-    const filePointer = fileRef?.current?.files?.[0]
+    const filePointer = uploadFile
 
     // eslint-disable-next-line no-use-before-define
     validateFilePromise(filePointer)
@@ -35,22 +49,25 @@ export default function UploadForm() {
             method: 'POST',
             onUploadProgress: (prog) => {
               const progress = prog.loaded / prog.total
-              toast.update(toastRef.current, { progress })
+              toast.update(uploadToastRef.current, { progress })
             },
             url,
           }
         )
       })
       .then(() => {
-        toast.update(toastRef.current, {
+        toast.update(uploadToastRef.current, {
           autoClose: 5000,
           render: 'Upload complete!',
           type: toast.TYPE.SUCCESS,
         })
-        fileRef.current.value = null
+        setUploadFile(null)
+        // if (uploadFileRef.current) {
+        //   uploadFileRef.current.value = null
+        // }
       })
       .catch((error) => {
-        toast.update(toastRef.current, {
+        toast.update(uploadToastRef.current, {
           autoClose: 5000,
           render: `Upload unsuccessful: ${error.message}`,
           type: toast.TYPE.ERROR,
@@ -90,19 +107,19 @@ export default function UploadForm() {
             name='user-upload'
             // onInput={(event) => {
             //   event.preventDefault()
-            //   if (fileRef?.current?.files?.[0]?.type?.includes('image')) {
-            //     setImageFile(() => fileRef?.current?.files?.[0])
+            //   if (uploadFileRef?.current?.files?.[0]?.type?.includes('image')) {
+            //     setImageFile(() => uploadFileRef?.current?.files?.[0])
             //   } else {
             //     setImageFile(() => null)
             //   }
             // }}
-            ref={fileRef}
+            onChange={handleFileChange}
             type='file'
           />
         </Input>
         <br />
         <Button
-          className={isUploading ? 'disabled' : ''}
+          disabled={isUploading}
           id='upload-button'
           type='submit'
           primary
