@@ -45,7 +45,7 @@ module.exports.handler = async (event) => {
       FeatureTypes: [
         "FORMS",
         "LAYOUT",
-        "TABLES",
+        // "TABLES",
       ],
       OutputConfig: {
         S3Bucket: bucketName,
@@ -76,7 +76,7 @@ module.exports.handler = async (event) => {
         Message: messageJSON,
       }),
     };
-    
+
     const sqsCommand = new SendMessageCommand(sqsParams);
     await sqsClient.send(sqsCommand);
 
