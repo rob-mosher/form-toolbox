@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Header } from 'semantic-ui-react'
 
-const VITE_API_PORT = import.meta.env.VITE_API_PORT || 3000
+import { API_PORT } from '../config/envConfig'
+
+// const VITE_API_PORT = import.meta.env.VITE_API_PORT || 3000
 
 export default function Home() {
   const [apiResponse, setApiResponse] = useState('Loading.')
 
   useEffect(() => {
-    fetch(`//localhost:${VITE_API_PORT}/`)
+    fetch(`//localhost:${API_PORT}/`)
       .then((resp) => {
         if (resp.ok) setApiResponse(resp.status.toString())
         else throw new Error(resp.status.toString())
