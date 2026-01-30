@@ -108,6 +108,39 @@ graph TD
 
 *Note: within Mermaid markup, it does not appear possible at this time to render "AWS" as a subgraph and retain the intended flow/shape.*
 
+# Azure Integration Diagram
+
+Form Toolbox can be implemented using Azure-native services while preserving the same architectural intent: event-driven form ingestion, durable processing, and asynchronous extraction of structured data from scanned documents.
+
+This Azure approach emphasizes managed integration, event orchestration, and enterprise durability, while remaining conceptually aligned with the AWS implementation.
+
+- **User**: (see above)
+- **Form Toolbox**: Central application stack (frontend, API, database). Uploads forms, initiates analysis, and transforms extracted results into contextual data.
+- **Azure Blob Storage**: Stores uploaded forms, thumbnails, metadata, and raw analysis output. Emits events when new blobs are created.
+- **Azure Event Grid**: Receives blob creation events and routes them to downstream compute.
+- Azure Functions: Serverless compute that retrieves metadata, initiates document analysis, and emits processing state messages.
+- Azure AI Document Intelligence (Form Recognizer): Extracts structured key-value pairs, tables, and fields from forms.
+- Azure Service Bus (Topic / Queue): Provides durable messaging for processing state (analysis started / completed), including dead-letter handling.
+- Form Toolbox Poller / Listener: Polls or subscribes to Service Bus messages to retrieve analysis results and finalize transformation.
+
+```mermaid
+graph TD
+  User(("User")) --"Uploads"--> FormToolbox{{"Form Toolbox"}}
+  FormToolbox --"Interacts"--> User
+
+  FormToolbox --"Uploads"--> Azure_Blob["Azure Blob Storage"]
+  Azure_Blob --"Blob Created Event"--> Azure_EventGrid["Azure Event Grid"]
+
+  Azure_EventGrid --"Triggers"--> Azure_Function["Azure Function"]
+  Azure_Function --"Gets Metadata"--> Azure_Blob
+
+  Azure_Function --"Initiates"--> Azure_DocumentAI["Azure AI Document Intelligence"]
+  Azure_DocumentAI --"Analysis Complete:<br />Messages"--> Azure_ServiceBus
+
+  Azure_Function --"Messages"--> Azure_ServiceBus["Azure Service Bus"]
+  Azure_ServiceBus --"When Polled / Subscribed"--> FormToolbox
+```
+
 # Database Diagram
 
 To balance the diverse requirements of various templates (types of forms) with the need for strict schema and ACID compliance, Form Toolbox employs a hyrid approach. Utilizing PostgreSQL's JSONB datatype, each template has its own schema, while still maintaining a consistent, overarching schema-based system. This methodology effectively merges the benefits of NoSQL/Document storage – flexibility and adaptability – with the strengths of a SQL/Schema-based system – reliability and structure. The result is a system that provides consistent document-style storage and retrieval within a structured SQL framework, catering to diverse form requirements while upholding data integrity and consistency.
